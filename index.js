@@ -24,24 +24,8 @@ app.use(
 // add new sales agent
 async function addNewAgent(agentData) {
   try {
-    const newAgent = new SalesAgent(agentData);
-    const emailPattern = /^[^@/s]+@[^@/s]+\.[^@/s]+$/;
-    const validateEmail = emailPattern.test(newAgent.email);
-    if (!validateEmail) {
-      throw {
-        status: 400,
-        message: "Invalid input: 'email' must be a valid email address.",
-      };
-    }
-    const emailExists = await SalesAgent.findOne({ email: newAgent.email });
-    if (emailExists) {
-      throw {
-        status: 409,
-        message: `Sales agent with email '${newAgent.email}' already exists.`,
-      };
-    }
-    const saveNewAgent = await newAgent.save();
-    return saveNewAgent;
+    const newAgent = await new SalesAgent(agentData).save();
+    return newAgent;
   } catch (error) {
     throw error;
   }
@@ -50,8 +34,27 @@ async function addNewAgent(agentData) {
 app.post("/agents", async (req, res) => {
   const agentData = req.body;
   try {
+    // email pattern check
+    const emailPattern = /^[^@/s]+@[^@/s]+\.[^@/s]+$/;
+    const validateEmail = emailPattern.test(agentData.email);
+    if (!validateEmail) {
+      throw {
+        status: 400,
+        message: "Invalid input: 'email' must be a valid email address.",
+      };
+    }
+
+    // unique email check
+    const emailExists = await SalesAgent.findOne({ email: agentData.email });
+    if (emailExists) {
+      throw {
+        status: 409,
+        message: `Sales agent with email '${agentData.email}' already exists.`,
+      };
+    }
+
     const newAgent = await addNewAgent(agentData);
-    if (!newAgent) throw { status: 500, message: "Unable to add new agent." };
+    if (!newAgent) throw { status: 400, message: "Unable to add new agent." };
     res.status(201).json({ message: "New Agent added!", newAgent });
   } catch (error) {
     res
@@ -140,7 +143,6 @@ function priorityCheck(priority) {
 }
 
 // create a new lead
-
 async function createNewLead(leadData) {
   try {
     const newLead = await new Lead(leadData).save();
@@ -234,7 +236,6 @@ app.get("/leads", async (req, res) => {
 });
 
 // update a lead
-
 async function updateLead(leadId, updatedData) {
   try {
     const updatedLead = await Lead.findByIdAndUpdate(leadId, updatedData, {
@@ -271,6 +272,31 @@ app.post("/leads/:id", async (req, res) => {
 
     const updatedLead = await updateLead(leadId, updatedData);
     res.status(200).json({ updatedLead });
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// delete a lead
+async function deleteLead(leadId) {
+  try {
+    const deletedLead = await Lead.findByIdAndDelete(leadId);
+    return deletedLead;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.delete("/leads/:id", async (req, res) => {
+  try {
+    const leadId = req.params.id;
+    const deletedLead = await deleteLead(leadId);
+    if (!deletedLead)
+      throw { status: 404, message: `Lead with Id '${leadId}' not found.` };
+
+    res.status(200).json({ message: "Lead deleted successfully." });
   } catch (error) {
     res
       .status(error.status || 500)
