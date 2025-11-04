@@ -143,6 +143,16 @@ function priorityCheck(priority) {
 
 async function createNewLead(leadData) {
   try {
+    const newLead = await new Lead(leadData).save();
+    return await newLead.populate("salesAgent");
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.post("/leads", async (req, res) => {
+  const leadData = req.body;
+  try {
     if (!leadData.name) {
       throw { status: 400, message: "Invalid input: 'name' is required." };
     }
@@ -162,32 +172,9 @@ async function createNewLead(leadData) {
     // Priority check
     priorityCheck(leadData.priority);
 
-    const newLead = await new Lead(leadData).save();
-    return await newLead.populate("salesAgent");
-    // console.log("Validation Success");
-  } catch (error) {
-    throw error;
-  }
-}
-
-const leadData = {
-  name: "Acme Corp",
-  source: "Referral",
-  salesAgent: "68ff455c659105c581d48b94", // Sales Agent ID
-  status: "New",
-  tags: ["High Value", "Follow-up"],
-  timeToClose: 1,
-  priority: "High",
-};
-
-createNewLead(leadData);
-
-app.post("/leads", async (req, res) => {
-  const leadData = req.body;
-  try {
-    const newAgent = await createNewLead(leadData);
-    if (!newAgent) throw { status: 500, message: "Unable to create new lead." };
-    res.status(201).json(newAgent);
+    const newLead = await createNewLead(leadData);
+    if (!newLead) throw { status: 500, message: "Unable to create new lead." };
+    res.status(201).json(newLead);
   } catch (error) {
     res
       .status(error.status || 500)
@@ -199,12 +186,8 @@ app.post("/leads", async (req, res) => {
 async function getAllLeads(filters) {
   try {
     const allLeadsData = await Lead.find(filters);
-    if (!allLeadsData) {
-      throw { status: 404, message: "No leads found." };
-    }
     return allLeadsData;
   } catch (error) {
-    // console.log(error);
     throw error;
   }
 }
@@ -216,39 +199,21 @@ app.get("/leads", async (req, res) => {
     // Sales Agent Check
     const salesAgentId = req.query.salesAgent;
     if (salesAgentId) {
-      const salesAgent = await SalesAgent.findById(salesAgentId);
-      if (!salesAgent) {
-        throw {
-          status: 400,
-          message: `Sales Agent with ID '${salesAgentId} is not found.'`,
-        };
-      }
+      salesAgentCheck(salesAgentId);
       filters.salesAgent = salesAgentId;
     }
 
     // Status Check
     const status = req.query.status;
     if (status) {
-      const allowedStatuses = Lead.schema.path("status").enumValues;
-      if (!allowedStatuses.includs(status))
-        throw {
-          status: 400,
-          message:
-            "Invalid input: 'status' must be one of ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed'].",
-        };
+      statusCheck(status);
       filters.status = status;
     }
 
     // Source Check
     const source = req.query.source;
     if (source) {
-      const allowedSources = Lead.schema.path("source").enumValues;
-      if (!allowedSources.includes(source))
-        throw {
-          status: 400,
-          message:
-            "Invalid input: 'source' must be one of ['Website', 'Referral', 'Cold Call', 'Advertisement', 'Email', 'Other'].",
-        };
+      sourceCheck(source);
       filters.source = source;
     }
 
@@ -272,25 +237,45 @@ app.get("/leads", async (req, res) => {
 
 async function updateLead(leadId, updatedData) {
   try {
-    const lead = await lead.findByIdAndUpdate(leadId, updatedData, {
+    const updatedLead = await Lead.findByIdAndUpdate(leadId, updatedData, {
       new: true,
     });
-    if (!lead) {
-      throw { status: 404, message: `Lead with ID '${leadId}' not found.` };
-    }
-    return lead;
+    return updatedLead;
   } catch (error) {
     throw error;
   }
 }
 
 app.post("/leads/:id", async (req, res) => {
+  const leadId = req.params.id;
   const updatedData = req.body;
   try {
     if (!updatedData.name) {
-      throw { status: 500 };
+      throw { status: 400, message: "Invalid input: 'name' is required." };
     }
-  } catch (error) {}
+
+    // Source check
+    sourceCheck(updatedData.source);
+
+    // Sales agent check
+    await salesAgentCheck(updatedData.salesAgent);
+
+    // Status check
+    statusCheck(updatedData.status);
+
+    // timeToClose check
+    timeToCloseCheck(updatedData.timeToClose);
+
+    // Priority check
+    priorityCheck(updatedData.priority);
+
+    const updatedLead = await updateLead(leadId, updatedData);
+    res.status(200).json({ updatedLead });
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
 });
 
 const port = process.env.PORT;
