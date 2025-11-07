@@ -34,6 +34,8 @@ async function addNewAgent(agentData) {
 app.post("/agents", async (req, res) => {
   const agentData = req.body;
   try {
+    if (!agentData.name) throw { status: 400, message: "Name is required." };
+
     // email pattern check
     const emailPattern = /^[^@/s]+@[^@/s]+\.[^@/s]+$/;
     const validateEmail = emailPattern.test(agentData.email);
@@ -271,7 +273,7 @@ app.post("/leads/:id", async (req, res) => {
     priorityCheck(updatedData.priority);
 
     const updatedLead = await updateLead(leadId, updatedData);
-    res.status(200).json({ updatedLead });
+    res.status(200).json(updatedLead);
   } catch (error) {
     res
       .status(error.status || 500)
@@ -301,6 +303,58 @@ app.delete("/leads/:id", async (req, res) => {
     res
       .status(error.status || 500)
       .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// -------- TAGS API ------------
+
+// add a new tag
+async function addNewTag(tagData) {
+  try {
+    const newTag = await new Tag(tagData).save();
+    return newTag;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.post("/tags", async (req, res) => {
+  const tagData = req.body;
+  try {
+    if (!tagData) {
+      throw {
+        status: 400,
+        message: "Invalid input: please enter a valid tag name.",
+      };
+    }
+    const newTag = await addNewTag(tagName);
+    if (!newTag) throw { status: 400, message: "Unable to add new tag." };
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// get all tags
+async function getAllTags() {
+  try {
+    const allTagsData = await Tag.find();
+    return allTagsData;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.get("/tags", async (req, res) => {
+  try {
+    const allTags = await getAllTags();
+    if (allTags.length === 0) {
+      throw { status: 404, message: "No tags found." };
+    }
+    res.status(200).json(allTags);
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
   }
 });
 
