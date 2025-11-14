@@ -103,6 +103,7 @@ function sourceCheck(source) {
 async function salesAgentCheck(salesAgentId) {
   try {
     const salesAgent = await SalesAgent.findById(salesAgentId);
+
     if (!salesAgent) {
       throw {
         status: 404,
@@ -189,7 +190,7 @@ app.post("/leads", async (req, res) => {
 // get all leads
 async function getAllLeads(filters) {
   try {
-    const allLeadsData = await Lead.find(filters);
+    const allLeadsData = await Lead.find(filters).populate("salesAgent");
     return allLeadsData;
   } catch (error) {
     throw error;
@@ -321,14 +322,21 @@ async function addNewTag(tagData) {
 app.post("/tags", async (req, res) => {
   const tagData = req.body;
   try {
-    if (!tagData) {
+    if (!tagData.name || tagData.name === "") {
       throw {
         status: 400,
         message: "Invalid input: please enter a valid tag name.",
       };
     }
-    const newTag = await addNewTag(tagName);
+    const tagExistsCheck = await Tag.findOne({ name: tagData.name });
+    if (tagExistsCheck)
+      throw {
+        status: 409,
+        message: `tag with name '${tagData.name}' already exists.`,
+      };
+    const newTag = await addNewTag(tagData);
     if (!newTag) throw { status: 400, message: "Unable to add new tag." };
+    res.status(200).json(newTag);
   } catch (error) {
     res
       .status(error.status || 500)
