@@ -11,7 +11,7 @@ const { initialiseDatabase } = require("./db/db.connect");
 
 initialiseDatabase();
 
-const app = express();  
+const app = express();
 app.use(express.json());
 app.use(
   cors({
@@ -78,7 +78,7 @@ async function getAllSalesAgents() {
 app.get("/agents", async (req, res) => {
   try {
     const allSalesAgents = await getAllSalesAgents();
-    if (allSalesAgents.length === 0)  
+    if (allSalesAgents.length === 0)
       throw { status: 404, message: "No agents found." };
     res.status(200).json(allSalesAgents);
   } catch (error) {
@@ -220,6 +220,13 @@ app.get("/leads", async (req, res) => {
     if (source) {
       sourceCheck(source);
       filters.source = source;
+    }
+
+    // Priority Check
+    const priority = req.query.priority;
+    if (priority) {
+      priorityCheck(priority);
+      filters.priority = priority;
     }
 
     // Tags Check
