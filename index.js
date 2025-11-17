@@ -86,6 +86,30 @@ app.get("/agents", async (req, res) => {
   }
 });
 
+// sales agent by id
+async function getSalesAgentById(salesAgentId) {
+  try {
+    const salesAgentData = await SalesAgent.findById(salesAgentId);
+    return salesAgentData;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.get("/agents/:id", async (req, res) => {
+  const salesAgentId = req.params.id;
+  try {
+    const salesAgent = await getSalesAgentById(salesAgentId);
+    if (!salesAgent)
+      throw res.status(404).json({ message: "Sales Agent not found." });
+    res.status(200).json(salesAgent);
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal server error." });
+  }
+});
+
 // -------- LEADS API ------------
 
 // validation functions
