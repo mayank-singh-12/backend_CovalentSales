@@ -59,6 +59,23 @@ const leadSchema = new mongoose.Schema({
 // Middleware to update the `updatedAt` field on each save
 leadSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
+
+  // calculating closedAt
+  if (this.status === "Closed") this.closedAt = this.createdAt;
+  else {
+    const creationDateObj = new Date(this.createdAt);
+    const creationDate = creationDateObj.getDate(); // returns date
+
+    const timeToClose = this.timeToClose; // in days
+
+    const closingTimestamp = creationDateObj.setDate(
+      creationDate + timeToClose
+    );
+    const closedAtObj = new Date(closingTimestamp);
+
+    this.closedAt = closedAtObj.toISOString();
+  }
+
   next();
 });
 

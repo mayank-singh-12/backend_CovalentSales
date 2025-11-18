@@ -397,6 +397,16 @@ app.get("/tags", async (req, res) => {
   }
 });
 
+// -------- REPORTING API ------------
+
+async function getLeadsClosedLastWeek(){
+  try{
+    const leadsData = await Lead.find();
+  }catch(error){
+
+  }
+}
+
 const port = process.env.PORT;
 
 app.listen(port, () => {
