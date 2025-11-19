@@ -393,19 +393,63 @@ app.get("/tags", async (req, res) => {
     }
     res.status(200).json(allTags);
   } catch (error) {
-    res.status(error.status || 500).json({ error: error.message });
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
   }
 });
 
 // -------- REPORTING API ------------
 
-async function getLeadsClosedLastWeek(){
-  try{
-    const leadsData = await Lead.find();
-  }catch(error){
-
+// leads closed within last week
+async function getLeadsClosedLastWeek() {
+  const curr = new Date();
+  const currDate = curr.getDate();
+  const lastWeekTimestamp = new Date().setDate(currDate - 7);
+  const dateLastWeek = new Date(lastWeekTimestamp);
+  try {
+    const leadsData = await Lead.find({
+      closedAt: { $gte: dateLastWeek, $lte: curr },
+    });
+    return leadsData;
+  } catch (error) {
+    throw error;
   }
 }
+
+app.get("/report/last-week", async (req, res) => {
+  try {
+    const leads = await getLeadsClosedLastWeek();
+    if (!leads) throw { status: 404, message: "Leads not found." };
+    res.status(200).json(leads);
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// open leads in pipeline
+async function getOpenLeads() {
+  try {
+    const leads = await Lead.find({ status: { $ne: "Closed" } });
+    return leads;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.get("/report/pipeline", async (req, res) => {
+  try {
+    const leads = await getOpenLeads();
+    if (!leads) throw { status: 404, message: "Leads not found." };
+    res.status(200).json({ totalLeadsInPipeline: leads.length });
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal server error." });
+  }
+});
 
 const port = process.env.PORT;
 
