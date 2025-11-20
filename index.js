@@ -338,8 +338,63 @@ app.delete("/leads/:id", async (req, res) => {
   }
 });
 
-// -------- TAGS API ------------
+// -------- COMMENTS API ------------
+// add a new comment
+async function addComment(commentData) {
+  try {
+    const comment = await new Comment(commentData).save();
+    return comment;
+  } catch (error) {
+    throw error;
+  }
+}
 
+app.post("/leads/:id/comments", async (req, res) => {
+  const leadId = req.params.id;
+  const commentObj = req.body;
+  try {
+    // checking lead
+    const lead = await Lead.findById(leadId);
+    if (!lead)
+      throw { status: 404, message: `Lead with ID '${leadId}' not found.` };
+
+    const comment = await addComment({ ...commentObj, lead: leadId });
+    if (!comment) throw { status: 401, message: "Unable to add new comment." };
+
+    res.status(200).json(comment);
+  } catch (error) {
+    res
+      .status(error.message || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// get all comments for a lead
+async function getAllComments(leadId) {
+  try {
+    const comments = await Comment.find({ lead: leadId }).populate("author");
+    console.log(comments);
+    return comments;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.get("/leads/:id/comments", async (req, res) => {
+  const leadId = req.params.id;
+  try {
+    const allComments = await getAllComments(leadId);
+    if (!allComments) throw { status: 404, message: "No Comments" };
+
+    res.status(200).json(allComments);
+  } catch (error) {
+    res
+      .status(error.message || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
+// -------- TAGS API ------------
 // add a new tag
 async function addNewTag(tagData) {
   try {
