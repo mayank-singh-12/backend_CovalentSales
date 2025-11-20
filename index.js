@@ -373,7 +373,6 @@ app.post("/leads/:id/comments", async (req, res) => {
 async function getAllComments(leadId) {
   try {
     const comments = await Comment.find({ lead: leadId }).populate("author");
-    console.log(comments);
     return comments;
   } catch (error) {
     throw error;
@@ -455,7 +454,6 @@ app.get("/tags", async (req, res) => {
 });
 
 // -------- REPORTING API ------------
-
 // leads closed within last week
 async function getLeadsClosedLastWeek() {
   const curr = new Date();
