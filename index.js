@@ -361,7 +361,7 @@ app.post("/leads/:id/comments", async (req, res) => {
     const comment = await addComment({ ...commentObj, lead: leadId });
     if (!comment) throw { status: 401, message: "Unable to add new comment." };
 
-    res.status(200).json(comment);
+    res.status(200).json({ message: "Comment added successfully!", comment });
   } catch (error) {
     res
       .status(error.message || 500)
