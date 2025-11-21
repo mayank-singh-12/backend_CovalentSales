@@ -383,12 +383,12 @@ app.get("/leads/:id/comments", async (req, res) => {
   const leadId = req.params.id;
   try {
     const allComments = await getAllComments(leadId);
-    if (allComments.length < 1) throw { status: 404, message: "No Comments" };
+    if (allComments.length === 0) throw { status: 404, message: "No Comments" };
 
     res.status(200).json(allComments);
   } catch (error) {
     res
-      .status(error.message || 500)
+      .status(error.status || 500)
       .json({ error: error.message || "Internal Server Error." });
   }
 });
