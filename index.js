@@ -383,7 +383,7 @@ app.get("/leads/:id/comments", async (req, res) => {
   const leadId = req.params.id;
   try {
     const allComments = await getAllComments(leadId);
-    if (!allComments) throw { status: 404, message: "No Comments" };
+    if (allComments.length < 1) throw { status: 404, message: "No Comments" };
 
     res.status(200).json(allComments);
   } catch (error) {
