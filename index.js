@@ -269,6 +269,29 @@ app.get("/leads", async (req, res) => {
   }
 });
 
+// get a lead
+async function getLead(leadId) {
+  try {
+    const leadData = await Lead.findById(leadId);
+    return leadData;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.get("/leads/:id", async (req, res) => {
+  const leadId = req.params.id;
+  try {
+    const lead = await getLead(leadId);
+    if (!lead) throw { status: 404, message: "Lead not found." };
+    res.status(200).json(lead);
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal Server Error." });
+  }
+});
+
 // update a lead
 async function updateLead(leadId, updatedData) {
   try {
@@ -281,7 +304,7 @@ async function updateLead(leadId, updatedData) {
   }
 }
 
-app.post("/leads/:id", async (req, res) => {
+app.post("/leads/:id/update", async (req, res) => {
   const leadId = req.params.id;
   const updatedData = req.body;
   try {
