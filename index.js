@@ -113,7 +113,7 @@ app.get("/agents/:id", async (req, res) => {
 // delete sales agent
 async function deleteAgent(agentId) {
   try {
-    const salesAgent = await Lead.findByIdAndDelete(agentId);
+    const salesAgent = await SalesAgent.findByIdAndDelete(agentId);
     return salesAgent;
   } catch (error) {
     throw error;
