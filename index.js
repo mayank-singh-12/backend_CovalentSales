@@ -120,19 +120,19 @@ async function deleteAgent(agentId) {
   }
 }
 
-app.delete("/agents/:id",async(req,res)=>{
+app.delete("/agents/:id", async (req, res) => {
   const salesAgentId = req.params.id;
-  try{
+  try {
     const salesAgent = await deleteAgent(salesAgentId);
-    if(!salesAgent) throw {status:404,message:"Sales Agent not found."}
+    if (!salesAgent) throw { status: 404, message: "Sales Agent not found." };
 
-    res.status(200).json({message:"Sales Agent deleted successfully!"})
-  }catch(error){
+    res.status(200).json({ message: "Sales Agent deleted successfully!" });
+  } catch (error) {
     res
       .status(error.status || 500)
       .json({ error: error.message || "Internal server error." });
   }
-})
+});
 
 // -------- LEADS API ------------
 
