@@ -110,6 +110,30 @@ app.get("/agents/:id", async (req, res) => {
   }
 });
 
+// delete sales agent
+async function deleteAgent(agentId) {
+  try {
+    const salesAgent = await Lead.findByIdAndDelete(agentId);
+    return salesAgent;
+  } catch (error) {
+    throw error;
+  }
+}
+
+app.delete("/agents/:id",async(req,res)=>{
+  const salesAgentId = req.params.id;
+  try{
+    const salesAgent = await deleteAgent(salesAgentId);
+    if(!salesAgent) throw {status:404,message:"Sales Agent not found."}
+
+    res.status(200).json({message:"Sales Agent deleted successfully!"})
+  }catch(error){
+    res
+      .status(error.status || 500)
+      .json({ error: error.message || "Internal server error." });
+  }
+})
+
 // -------- LEADS API ------------
 
 // validation functions
