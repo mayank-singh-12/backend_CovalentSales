@@ -37,7 +37,7 @@ app.post("/agents", async (req, res) => {
     if (!agentData.name) throw { status: 400, message: "Name is required." };
 
     // email pattern check
-    const emailPattern = /^[^@/s]+@[^@/s]+\.[^@/s]+$/;
+    const emailPattern = /^[^@\\s]+@[^@\\s]+\.[^@\\s]+$/;
     const validateEmail = emailPattern.test(agentData.email);
     if (!validateEmail) {
       throw {
